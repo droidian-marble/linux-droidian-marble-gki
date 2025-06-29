@@ -51,10 +51,10 @@ jobs:
           cp ../*.deb /out/
           cp ../*.dsc /out/
           cp ../*.tar.xz /out/
-          cd /out && export bootimagename=$(ls linux-bootimage-5.10.209-xiaomi-marble_*.*.*_arm64.deb)
+          cd /out && export bootimagename=$(ls linux-bootimage-5.10.226-xiaomi-marble_*.*.*_arm64.deb)
           dpkg-deb -R /out/$bootimagename /bootimage
           cd /bootimage
-          rm boot/recovery.img-5.10.209-xiaomi-marble
+          rm boot/recovery.img-5.10.226-xiaomi-marble
           find . -type f -not -path "./DEBIAN/*" -exec md5sum {} + | sort -k 2 | sed 's/\.\/\(.*\)/\1/' > DEBIAN/md5sums
           cd /
           rm /out/$bootimagename
