@@ -24,7 +24,7 @@
 *.gcno
 *.gz
 *.i
-*.ko
+#*.ko
 *.lex.c
 *.ll
 *.lst
@@ -75,7 +75,7 @@ modules.order
 #
 # Debian directory (make deb-pkg)
 #
-/debian/
+#/debian/
 
 #
 # Snap directory (make snap-pkg)
@@ -96,6 +96,7 @@ modules.order
 !.gitattributes
 !.gitignore
 !.mailmap
+!.github
 
 #
 # Generated include files
@@ -106,10 +107,10 @@ modules.order
 /arch/*/include/generated/
 
 # stgit generated dirs
-patches-*
+#patches-*
 
 # quilt's files
-patches
+#patches
 series
 
 # cscope files
