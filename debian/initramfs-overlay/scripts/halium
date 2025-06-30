@@ -744,7 +744,7 @@ mountroot() {
 		HALIUM_RECOVERY="no"
 	fi
 
-	#mount_vendor_partitions "$ab_slot_suffix"
+	mount_vendor_partitions "$ab_slot_suffix"
 
 	# Check if we should prefer LVM mounts. If that's the case, try
 	# mounting the droidian-rootfs LV first, then fallback to the standard
