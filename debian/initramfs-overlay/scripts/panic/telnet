@@ -63,10 +63,10 @@ load_adsp() {
         # Mount vendor partition
         tell_kmsg "Mounting vendor to /vendor"
         mkdir /vendor
-        mount -o ro /dev/mapper/vendor_a /vendor
+        mount -o ro /dev/mapper/dynpart-vendor_a /vendor
 	tell_kmsg "Mounting vendor_dlkm to /vendor_dlkm"
 	mkdir /vendor_dlkm
-	mount -o ro /dev/mapper/vendor_dlkm_a /vendor_dlkm
+	mount -o ro /dev/mapper/dynpart-vendor_dlkm_a /vendor_dlkm
 
         # Load adsp_loader_dlkm module from vendor partition
         rm -f "/lib/modules/$(uname -r)"
