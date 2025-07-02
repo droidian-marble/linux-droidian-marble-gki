@@ -13,7 +13,8 @@ prereqs)
 esac
 
 USB_FUNCTIONS=rndis
-ANDROID_USB=/sys/class/android_usb/android0
+#ANDROID_USB=/sys/class/android_usb/android0
+ANDROID_USB=/proc/thisfoldernotexists
 GADGET_DIR=/config/usb_gadget
 LOCAL_IP=192.168.2.15
 EXPLICIT_BUSYBOX="/bin/busybox"
