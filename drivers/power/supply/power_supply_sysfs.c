@@ -475,6 +475,10 @@ int power_supply_uevent(struct device *dev, struct kobj_uevent_env *env)
 		goto out;
 
 	for (j = 0; j < psy->desc->num_properties; j++) {
+		if (psy->desc->type == POWER_SUPPLY_TYPE_WIRELESS &&
+		    psy->desc->properties[j] == POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT)
+			continue;
+
 		ret = add_prop_uevent(dev, env, psy->desc->properties[j],
 				      prop_buf);
 		if (ret)
