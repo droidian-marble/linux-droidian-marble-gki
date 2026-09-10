@@ -1,0 +1,27 @@
+name: Build Droidian kernel
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: quay.io/droidian/build-essential:current-amd64
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build
+        env:
+          RELENG_FULL_BUILD: yes
+          RELENG_HOST_ARCH: arm64
+        run: |
+          rm -f debian/control
+          debian/rules debian/control
+          releng-build-package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-5.10.236-xiaomi-marble-droidian
+          path: ../*.deb
+          if-no-files-found: error

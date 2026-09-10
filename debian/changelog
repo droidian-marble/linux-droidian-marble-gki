@@ -1,0 +1,6 @@
+linux-android-xiaomi-marble (0.0.1) trixie; urgency=medium
+
+  * Droidian packaging for Xiaomi marble, Linux 5.10.236.
+  * Use LZ4 initramfs compression.
+
+ -- Droidian porters <info@droidian.org>  Thu, 10 Sep 2026 11:07:00 +0300
