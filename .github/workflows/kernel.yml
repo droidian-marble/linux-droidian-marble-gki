@@ -1,27 +1,49 @@
 name: Build Droidian kernel
+
 on:
   workflow_dispatch:
   push:
     tags:
       - '*'
+
 jobs:
   build:
+    name: Build Droidian kernel
     runs-on: ubuntu-latest
-    container: quay.io/droidian/build-essential:current-amd64
+    container:
+      image: quay.io/droidian/build-essential:current-amd64
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Build
+
+      - name: Install build dependencies
+        run: |
+          apt update
+          apt install -y curl git fakeroot build-essential dpkg-dev findutils ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison rsync kmod cpio lz4 linux-packaging-snippets linux-initramfs-halium-generic android-sdk-ufdt-tests mkbootimg mkdtboimg avbtool android-platform-prebuilts-python-linux-x86-2.7.5 clang-android-12.0-r416183b binutils-aarch64-linux-gnu gcc-4.9-aarch64-linux-android g++-4.9-aarch64-linux-android libgcc-4.9-dev-aarch64-linux-android-cross
+
+      - name: Build kernel packages
         env:
           RELENG_FULL_BUILD: yes
           RELENG_HOST_ARCH: arm64
         run: |
-          rm -f debian/control
-          debian/rules debian/control
+          export PATH=/opt/android/prebuilts/python/2.7.5/bin:$PATH
           releng-build-package
-      - uses: actions/upload-artifact@v4
+
+      - name: List build output
+        run: |
+          find .. -maxdepth 1 -type f \( -name '*.deb' -o -name '*.dsc' -o -name '*.tar.*' -o -name '*.changes' -o -name '*.buildinfo' \) -print
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
         with:
           name: linux-5.10.236-xiaomi-marble-droidian
-          path: ../*.deb
+          path: |
+            ../*.deb
+            ../*.dsc
+            ../*.tar.*
+            ../*.changes
+            ../*.buildinfo
           if-no-files-found: error
