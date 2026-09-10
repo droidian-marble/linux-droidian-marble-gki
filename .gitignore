@@ -75,7 +75,7 @@ modules.order
 #
 # Debian directory (make deb-pkg)
 #
-/debian/
+# /debian/
 
 #
 # Snap directory (make snap-pkg)
@@ -96,6 +96,7 @@ modules.order
 !.gitattributes
 !.gitignore
 !.mailmap
+!.github
 
 #
 # Generated include files
