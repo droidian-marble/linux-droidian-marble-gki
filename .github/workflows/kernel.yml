@@ -17,7 +17,8 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+            ref: droidian
+            submodules: recursive
 
       - name: Install build dependencies
         run: |
