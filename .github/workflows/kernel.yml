@@ -1,50 +1,96 @@
 name: Build Droidian kernel
 
 on:
-  workflow_dispatch:
   push:
-    tags:
-      - '*'
+    branches:
+      - droidian
+  workflow_dispatch:
 
 jobs:
   build:
     name: Build Droidian kernel
     runs-on: ubuntu-latest
-    container:
-      image: quay.io/droidian/build-essential:current-amd64
+    container: quay.io/droidian/build-essential:current-amd64
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
         with:
-            ref: droidian
-            submodules: recursive
+          ref: droidian
+          submodules: recursive
 
       - name: Install build dependencies
         run: |
           apt update
-          apt install -y curl git fakeroot build-essential dpkg-dev findutils ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison rsync kmod cpio lz4 linux-packaging-snippets linux-initramfs-halium-generic android-sdk-ufdt-tests mkbootimg mkdtboimg avbtool android-platform-prebuilts-python-linux-x86-2.7.5 clang-android-12.0-r416183b binutils-aarch64-linux-gnu gcc-4.9-aarch64-linux-android g++-4.9-aarch64-linux-android libgcc-4.9-dev-aarch64-linux-android-cross
+          apt install -y curl aria2 git fakeroot build-essential ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison dpkg-dev findutils android-platform-prebuilts-python-linux-x86-2.7.5 rsync kmod cpio avbtool binutils-aarch64-linux-gnu gcc-4.9-aarch64-linux-android g++-4.9-aarch64-linux-android libgcc-4.9-dev-aarch64-linux-android-cross lz4 linux-packaging-snippets clang-android-12.0-r416183b
 
-      - name: Build kernel packages
-        env:
-          RELENG_FULL_BUILD: yes
-          RELENG_HOST_ARCH: arm64
+      - name: Install package dependencies
         run: |
-          export PATH=/opt/android/prebuilts/python/2.7.5/bin:$PATH
-          releng-build-package
+          source_package=$(awk 'NR == 1 { print $1 }' debian/changelog)
+          mk-build-deps --remove --install --tool "apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends --yes" debian/control
+          rm -f "${source_package}"-build-deps_*.*
 
-      - name: List build output
+      - name: Build packages
         run: |
-          find .. -maxdepth 1 -type f \( -name '*.deb' -o -name '*.dsc' -o -name '*.tar.*' -o -name '*.changes' -o -name '*.buildinfo' \) -print
+          export PATH="/opt/android/prebuilts/python/2.7.5/bin:$PATH"
+          debuild --no-lintian -F -d -sa --no-sign --jobs="$(nproc)" -aarm64
 
-      - name: Upload packages
+      - name: Prepare artifacts
+        run: |
+          mkdir -p /out /tmp/bootimage
+          cp ../*.deb ../*.dsc ../*.tar.xz /out/
+          bootimage_package=$(find /out -maxdepth 1 -type f -name 'linux-bootimage-5.10.236-xiaomi-marble_*_arm64.deb' -print -quit)
+          test -n "$bootimage_package"
+          dpkg-deb -R "$bootimage_package" /tmp/bootimage
+          rm -f /tmp/bootimage/boot/recovery.img-5.10.236-xiaomi-marble
+          find /tmp/bootimage -type f -not -path '/tmp/bootimage/DEBIAN/*' -exec md5sum {} + | sort -k 2 | sed 's#  /tmp/bootimage/##' > /tmp/bootimage/DEBIAN/md5sums
+          rm "$bootimage_package"
+          dpkg-deb -b /tmp/bootimage "$bootimage_package"
+          ls -lah /out
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-5.10.236-xiaomi-marble-droidian
-          path: |
-            ../*.deb
-            ../*.dsc
-            ../*.tar.*
-            ../*.changes
-            ../*.buildinfo
+          name: kernel-droidian
+          path: /out/*
           if-no-files-found: error
+          retention-days: 1
+
+  prepare:
+    name: Prepare latest release
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Delete previous release
+        uses: dev-drprasad/delete-tag-and-release@v1.1
+        with:
+          delete_release: true
+          tag_name: latest-kernel-droidian
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create latest tag
+        uses: tvdias/github-tagger@v0.0.1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          tag: latest-kernel-droidian
+
+  publish:
+    name: Publish latest release
+    runs-on: ubuntu-latest
+    needs: prepare
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: out
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          files: out/kernel-droidian/*
+          tag_name: latest-kernel-droidian
+          draft: false
+          prerelease: false
