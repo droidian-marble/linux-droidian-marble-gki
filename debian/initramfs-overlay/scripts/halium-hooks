@@ -1,0 +1,25 @@
+#!/bin/sh
+
+halium_hook_load_extra_kernel_modules() {
+    [ -f /vendor/lib/modules/modules.dep ] || return
+
+    module_root="/lib/modules/$(uname -r)"
+    old_module_root="$(readlink "$module_root")"
+
+    rm -f "$module_root"
+    ln -s /vendor/lib/modules "$module_root"
+
+    echo -n /vendor/firmware > /sys/module/firmware_class/parameters/path
+
+    tell_kmsg "Loading vendor touch/display stack"
+
+    modprobe gpi || tell_kmsg "WARNING: Failed to load gpi"
+    modprobe spi_msm_geni || tell_kmsg "WARNING: Failed to load spi_msm_geni"
+    modprobe goodix_core || tell_kmsg "WARNING: Failed to load goodix_core"
+    modprobe msm_drm || tell_kmsg "WARNING: Failed to load msm_drm"
+
+    rm -f "$module_root"
+    if [ -n "$old_module_root" ]; then
+        ln -s "$old_module_root" "$module_root"
+    fi
+}
